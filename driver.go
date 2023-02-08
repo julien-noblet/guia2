@@ -6,13 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/electricbubble/gadb"
 	"net/http"
 	"net/url"
 	"path"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/electricbubble/gadb"
 )
 
 type Driver struct {
@@ -31,22 +32,22 @@ func (d *Driver) _requestURL(elem ...string) string {
 	return tmp.String()
 }
 
-func (d *Driver) executeGet(pathElem ...string) (rawResp RawResponse, err error) {
-	return executeHTTP(http.MethodGet, d._requestURL(pathElem...), nil)
+func (d *Driver) ExecuteGet(pathElem ...string) (rawResp RawResponse, err error) {
+	return ExecuteHTTP(http.MethodGet, d._requestURL(pathElem...), nil)
 }
 
-func (d *Driver) executePost(data interface{}, pathElem ...string) (rawResp RawResponse, err error) {
+func (d *Driver) ExecutePost(data interface{}, pathElem ...string) (rawResp RawResponse, err error) {
 	var bsJSON []byte = nil
 	if data != nil {
 		if bsJSON, err = json.Marshal(data); err != nil {
 			return nil, err
 		}
 	}
-	return executeHTTP(http.MethodPost, d._requestURL(pathElem...), bsJSON)
+	return ExecuteHTTP(http.MethodPost, d._requestURL(pathElem...), bsJSON)
 }
 
-func (d *Driver) executeDelete(pathElem ...string) (rawResp RawResponse, err error) {
-	return executeHTTP(http.MethodDelete, d._requestURL(pathElem...), nil)
+func (d *Driver) ExecuteDelete(pathElem ...string) (rawResp RawResponse, err error) {
+	return ExecuteHTTP(http.MethodDelete, d._requestURL(pathElem...), nil)
 }
 
 type Capabilities map[string]interface{}
@@ -73,10 +74,10 @@ func (d *Driver) NewSession(capabilities Capabilities) (sessionID string, err er
 	// register(postHandler, new NewSession("/wd/hub/session"))
 	var rawResp RawResponse
 	data := map[string]interface{}{"capabilities": capabilities}
-	if rawResp, err = d.executePost(data, "/session"); err != nil {
+	if rawResp, err = d.ExecutePost(data, "/session"); err != nil {
 		return "", err
 	}
-	var reply = new(struct{ Value struct{ SessionId string } })
+	reply := new(struct{ Value struct{ SessionId string } })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return "", err
 	}
@@ -90,7 +91,7 @@ func (d *Driver) Quit() (err error) {
 	if d.sessionId == "" {
 		return nil
 	}
-	if _, err = d.executeDelete("/session", d.sessionId); err == nil {
+	if _, err = d.ExecuteDelete("/session", d.sessionId); err == nil {
 		d.sessionId = ""
 	}
 
@@ -104,10 +105,10 @@ func (d *Driver) ActiveSessionID() string {
 func (d *Driver) SessionIDs() (sessionIDs []string, err error) {
 	// register(getHandler, new GetSessions("/wd/hub/sessions"))
 	var rawResp RawResponse
-	if rawResp, err = d.executeGet("/sessions"); err != nil {
+	if rawResp, err = d.ExecuteGet("/sessions"); err != nil {
 		return nil, err
 	}
-	var reply = new(struct{ Value []struct{ SessionId string } })
+	reply := new(struct{ Value []struct{ SessionId string } })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return nil, err
 	}
@@ -122,10 +123,10 @@ func (d *Driver) SessionIDs() (sessionIDs []string, err error) {
 func (d *Driver) SessionDetails() (scrollData map[string]interface{}, err error) {
 	// register(getHandler, new GetSessionDetails("/wd/hub/session/:sessionId"))
 	var rawResp RawResponse
-	if rawResp, err = d.executeGet("/session", d.sessionId); err != nil {
+	if rawResp, err = d.ExecuteGet("/session", d.sessionId); err != nil {
 		return nil, err
 	}
-	var reply = new(struct{ Value map[string]interface{} })
+	reply := new(struct{ Value map[string]interface{} })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return nil, err
 	}
@@ -137,10 +138,10 @@ func (d *Driver) SessionDetails() (scrollData map[string]interface{}, err error)
 func (d *Driver) Status() (ready bool, err error) {
 	// register(getHandler, new Status("/wd/hub/status"))
 	var rawResp RawResponse
-	if rawResp, err = d.executeGet("/status"); err != nil {
+	if rawResp, err = d.ExecuteGet("/status"); err != nil {
 		return false, err
 	}
-	var reply = new(struct {
+	reply := new(struct {
 		Value struct {
 			// Message string
 			Ready bool
@@ -157,10 +158,10 @@ func (d *Driver) Status() (ready bool, err error) {
 func (d *Driver) Screenshot() (raw *bytes.Buffer, err error) {
 	// register(getHandler, new CaptureScreenshot("/wd/hub/session/:sessionId/screenshot"))
 	var rawResp RawResponse
-	if rawResp, err = d.executeGet("/session", d.sessionId, "screenshot"); err != nil {
+	if rawResp, err = d.ExecuteGet("/session", d.sessionId, "screenshot"); err != nil {
 		return nil, err
 	}
-	var reply = new(struct{ Value string })
+	reply := new(struct{ Value string })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return nil, err
 	}
@@ -184,10 +185,10 @@ const (
 func (d *Driver) Orientation() (orientation Orientation, err error) {
 	// register(getHandler, new GetOrientation("/wd/hub/session/:sessionId/orientation"))
 	var rawResp RawResponse
-	if rawResp, err = d.executeGet("/session", d.sessionId, "orientation"); err != nil {
+	if rawResp, err = d.ExecuteGet("/session", d.sessionId, "orientation"); err != nil {
 		return "", err
 	}
-	var reply = new(struct{ Value Orientation })
+	reply := new(struct{ Value Orientation })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return "", err
 	}
@@ -200,13 +201,22 @@ type Rotation struct {
 	X, Y, Z int
 }
 
+func (d *Driver) Refresh() error {
+	// register(getHandler, new Refresh("/wd/hub/session/:sessionId/refresh"))
+	if _, err := d.ExecuteGet("/session", d.sessionId, "refresh"); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (d *Driver) Rotation() (rotation Rotation, err error) {
 	// register(getHandler, new GetRotation("/wd/hub/session/:sessionId/rotation"))
 	var rawResp RawResponse
-	if rawResp, err = d.executeGet("/session", d.sessionId, "rotation"); err != nil {
+	if rawResp, err = d.ExecuteGet("/session", d.sessionId, "rotation"); err != nil {
 		return Rotation{}, err
 	}
-	var reply = new(struct{ Value Rotation })
+	reply := new(struct{ Value Rotation })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return Rotation{}, err
 	}
@@ -223,10 +233,10 @@ type Size struct {
 func (d *Driver) DeviceSize() (deviceSize Size, err error) {
 	// register(getHandler, new GetDeviceSize("/wd/hub/session/:sessionId/window/:windowHandle/size"))
 	var rawResp RawResponse
-	if rawResp, err = d.executeGet("/session", d.sessionId, "window/:windowHandle/size"); err != nil {
+	if rawResp, err = d.ExecuteGet("/session", d.sessionId, "window/:windowHandle/size"); err != nil {
 		return Size{}, err
 	}
-	var reply = new(struct{ Value Size })
+	reply := new(struct{ Value Size })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return Size{}, err
 	}
@@ -239,10 +249,10 @@ func (d *Driver) DeviceSize() (deviceSize Size, err error) {
 func (d *Driver) Source() (sXML string, err error) {
 	// register(getHandler, new Source("/wd/hub/session/:sessionId/source"))
 	var rawResp RawResponse
-	if rawResp, err = d.executeGet("/session", d.sessionId, "source"); err != nil {
+	if rawResp, err = d.ExecuteGet("/session", d.sessionId, "source"); err != nil {
 		return "", err
 	}
-	var reply = new(struct{ Value string })
+	reply := new(struct{ Value string })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return "", err
 	}
@@ -255,10 +265,10 @@ func (d *Driver) Source() (sXML string, err error) {
 func (d *Driver) StatusBarHeight() (height int, err error) {
 	// register(getHandler, new GetSystemBars("/wd/hub/session/:sessionId/appium/device/system_bars"))
 	var rawResp RawResponse
-	if rawResp, err = d.executeGet("/session", d.sessionId, "appium/device/system_bars"); err != nil {
+	if rawResp, err = d.ExecuteGet("/session", d.sessionId, "appium/device/system_bars"); err != nil {
 		return 0, err
 	}
-	var reply = new(struct{ Value struct{ StatusBar int } })
+	reply := new(struct{ Value struct{ StatusBar int } })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return 0, err
 	}
@@ -305,10 +315,10 @@ type BatteryInfo struct {
 func (d *Driver) BatteryInfo() (info BatteryInfo, err error) {
 	// register(getHandler, new GetBatteryInfo("/wd/hub/session/:sessionId/appium/device/battery_info"))
 	var rawResp RawResponse
-	if rawResp, err = d.executeGet("/session", d.sessionId, "appium/device/battery_info"); err != nil {
+	if rawResp, err = d.ExecuteGet("/session", d.sessionId, "appium/device/battery_info"); err != nil {
 		return BatteryInfo{}, err
 	}
-	var reply = new(struct{ Value BatteryInfo })
+	reply := new(struct{ Value BatteryInfo })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return BatteryInfo{}, err
 	}
@@ -323,10 +333,10 @@ func (d *Driver) BatteryInfo() (info BatteryInfo, err error) {
 func (d *Driver) GetAppiumSettings() (settings map[string]interface{}, err error) {
 	// register(getHandler, new GetSettings("/wd/hub/session/:sessionId/appium/settings"))
 	var rawResp RawResponse
-	if rawResp, err = d.executeGet("/session", d.sessionId, "appium/settings"); err != nil {
+	if rawResp, err = d.ExecuteGet("/session", d.sessionId, "appium/settings"); err != nil {
 		return nil, err
 	}
-	var reply = new(struct{ Value map[string]interface{} })
+	reply := new(struct{ Value map[string]interface{} })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return nil, err
 	}
@@ -339,10 +349,10 @@ func (d *Driver) GetAppiumSettings() (settings map[string]interface{}, err error
 func (d *Driver) DeviceScaleRatio() (scale float64, err error) {
 	// register(getHandler, new GetDevicePixelRatio("/wd/hub/session/:sessionId/appium/device/pixel_ratio"))
 	var rawResp RawResponse
-	if rawResp, err = d.executeGet("/session", d.sessionId, "appium/device/pixel_ratio"); err != nil {
+	if rawResp, err = d.ExecuteGet("/session", d.sessionId, "appium/device/pixel_ratio"); err != nil {
 		return 0, err
 	}
-	var reply = new(struct{ Value float64 })
+	reply := new(struct{ Value float64 })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return 0, err
 	}
@@ -411,10 +421,10 @@ type (
 func (d *Driver) DeviceInfo() (info DeviceInfo, err error) {
 	// register(getHandler, new GetDeviceInfo("/wd/hub/session/:sessionId/appium/device/info"))
 	var rawResp RawResponse
-	if rawResp, err = d.executeGet("/session", d.sessionId, "appium/device/info"); err != nil {
+	if rawResp, err = d.ExecuteGet("/session", d.sessionId, "appium/device/info"); err != nil {
 		return DeviceInfo{}, err
 	}
-	var reply = new(struct{ Value DeviceInfo })
+	reply := new(struct{ Value DeviceInfo })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return DeviceInfo{}, err
 	}
@@ -427,10 +437,10 @@ func (d *Driver) DeviceInfo() (info DeviceInfo, err error) {
 func (d *Driver) AlertText() (text string, err error) {
 	// register(getHandler, new GetAlertText("/wd/hub/session/:sessionId/alert/text"))
 	var rawResp RawResponse
-	if rawResp, err = d.executeGet("/session", d.sessionId, "alert/text"); err != nil {
+	if rawResp, err = d.ExecuteGet("/session", d.sessionId, "alert/text"); err != nil {
 		return "", err
 	}
-	var reply = new(struct{ Value string })
+	reply := new(struct{ Value string })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return "", err
 	}
@@ -461,7 +471,7 @@ func (d *Driver) TapFloat(x, y float64) (err error) {
 		"x": x,
 		"y": y,
 	}
-	_, err = d.executePost(data, "/session", d.sessionId, "appium/tap")
+	_, err = d.ExecutePost(data, "/session", d.sessionId, "appium/tap")
 	return
 }
 
@@ -485,14 +495,15 @@ func (d *Driver) _swipe(startX, startY, endX, endY interface{}, steps int, eleme
 	if len(elementID) != 0 {
 		data["elementId"] = elementID[0]
 	}
-	_, err = d.executePost(data, "/session", d.sessionId, "touch/perform")
+	_, err = d.ExecutePost(data, "/session", d.sessionId, "touch/perform")
 	return
 }
 
 // Swipe performs a swipe from one coordinate to another using the number of steps
 // to determine smoothness and speed. Each step execution is throttled to 5ms
 // per step. So for a 100 steps, the swipe will take about 1/2 second to complete.
-//  `steps` is the number of move steps sent to the system
+//
+//	`steps` is the number of move steps sent to the system
 func (d *Driver) Swipe(startX, startY, endX, endY int, steps ...int) (err error) {
 	return d.SwipeFloat(float64(startX), float64(startY), float64(endX), float64(endY), steps...)
 }
@@ -514,7 +525,7 @@ func (d *Driver) SwipePointF(startPoint, endPoint PointF, steps ...int) (err err
 
 func (d *Driver) _drag(data map[string]interface{}) (err error) {
 	// register(postHandler, new Drag("/wd/hub/session/:sessionId/touch/drag"))
-	_, err = d.executePost(data, "/session", d.sessionId, "touch/drag")
+	_, err = d.ExecutePost(data, "/session", d.sessionId, "touch/drag")
 	return
 }
 
@@ -560,7 +571,7 @@ func (d *Driver) TouchLongClick(x, y int, duration ...float64) (err error) {
 			"duration": int(duration[0] * 1000),
 		},
 	}
-	_, err = d.executePost(data, "/session", d.sessionId, "touch/longclick")
+	_, err = d.ExecutePost(data, "/session", d.sessionId, "touch/longclick")
 	return
 }
 
@@ -578,23 +589,23 @@ func (d *Driver) SendKeys(text string, isReplace ...bool) (err error) {
 		"text":    text,
 		"replace": isReplace[0],
 	}
-	_, err = d.executePost(data, "/session", d.sessionId, "keys")
+	_, err = d.ExecutePost(data, "/session", d.sessionId, "keys")
 	return
 }
 
 // PressBack simulates a short press on the BACK button.
 func (d *Driver) PressBack() (err error) {
 	// register(postHandler, new PressBack("/wd/hub/session/:sessionId/back"))
-	_, err = d.executePost(nil, "/session", d.sessionId, "back")
+	_, err = d.ExecutePost(nil, "/session", d.sessionId, "back")
 	return
 }
 
-// public class KeyCodeModel extends BaseModel {
-//    @RequiredField
-//    public Integer keycode;
-//    public Integer metastate;
-//    public Integer flags;
-// }
+//	public class KeyCodeModel extends BaseModel {
+//	   @RequiredField
+//	   public Integer keycode;
+//	   public Integer metastate;
+//	   public Integer flags;
+//	}
 func (d *Driver) LongPressKeyCode(keyCode KeyCode, metaState KeyMeta, flags ...KeyFlag) (err error) {
 	if len(flags) == 0 {
 		flags = []KeyFlag{KFFromSystem}
@@ -605,7 +616,7 @@ func (d *Driver) LongPressKeyCode(keyCode KeyCode, metaState KeyMeta, flags ...K
 		"flags":     flags[0],
 	}
 	// register(postHandler, new LongPressKeyCode("/wd/hub/session/:sessionId/appium/device/long_press_keycode"))
-	_, err = d.executePost(data, "/session", d.sessionId, "/appium/device/long_press_keycode")
+	_, err = d.ExecutePost(data, "/session", d.sessionId, "/appium/device/long_press_keycode")
 	return
 }
 
@@ -620,7 +631,7 @@ func (d *Driver) _pressKeyCode(keyCode KeyCode, metaState KeyMeta, flags ...KeyF
 	if len(flags) != 0 {
 		data["flags"] = flags[0]
 	}
-	_, err = d.executePost(data, "/session", d.sessionId, "appium/device/press_keycode")
+	_, err = d.ExecutePost(data, "/session", d.sessionId, "appium/device/press_keycode")
 	return
 }
 
@@ -647,7 +658,7 @@ func (d *Driver) TouchDown(x, y int) (err error) {
 			"y": y,
 		},
 	}
-	_, err = d.executePost(data, "/session", d.sessionId, "touch/down")
+	_, err = d.ExecutePost(data, "/session", d.sessionId, "touch/down")
 	return
 }
 
@@ -663,7 +674,7 @@ func (d *Driver) TouchUp(x, y int) (err error) {
 			"y": y,
 		},
 	}
-	_, err = d.executePost(data, "/session", d.sessionId, "touch/up")
+	_, err = d.ExecutePost(data, "/session", d.sessionId, "touch/up")
 	return
 }
 
@@ -679,7 +690,7 @@ func (d *Driver) TouchMove(x, y int) (err error) {
 			"y": y,
 		},
 	}
-	_, err = d.executePost(data, "/session", d.sessionId, "touch/move")
+	_, err = d.ExecutePost(data, "/session", d.sessionId, "touch/move")
 	return
 }
 
@@ -690,13 +701,13 @@ func (d *Driver) TouchMovePoint(point Point) error {
 // OpenNotification opens the notification shade.
 func (d *Driver) OpenNotification() (err error) {
 	// register(postHandler, new OpenNotification("/wd/hub/session/:sessionId/appium/device/open_notifications"))
-	_, err = d.executePost(nil, "/session", d.sessionId, "appium/device/open_notifications")
+	_, err = d.ExecutePost(nil, "/session", d.sessionId, "appium/device/open_notifications")
 	return
 }
 
 func (d *Driver) _flick(data map[string]interface{}) (err error) {
 	// register(postHandler, new Flick("/wd/hub/session/:sessionId/touch/flick"))
-	_, err = d.executePost(data, "/session", d.sessionId, "touch/flick")
+	_, err = d.ExecutePost(data, "/session", d.sessionId, "touch/flick")
 	return
 }
 
@@ -728,7 +739,7 @@ func (d *Driver) _scrollTo(method, selector string, maxSwipes int, elementID ...
 			webElementIdentifier:       elementID[0],
 		}
 	}
-	_, err = d.executePost(data, "/session", d.sessionId, "touch/scroll")
+	_, err = d.ExecutePost(data, "/session", d.sessionId, "touch/scroll")
 	return
 }
 
@@ -791,7 +802,7 @@ func (d *Driver) MultiPointerGesture(gesture1 *TouchAction, gesture2 *TouchActio
 		"actions": actions,
 	}
 	// register(postHandler, new MultiPointerGesture("/wd/hub/session/:sessionId/touch/multi/perform"))
-	_, err = d.executePost(data, "/session", d.sessionId, "/touch/multi/perform")
+	_, err = d.ExecutePost(data, "/session", d.sessionId, "/touch/multi/perform")
 	return
 }
 
@@ -842,7 +853,6 @@ func (g w3cGesture) pointerMove(x, y float64, origin string, duration float64, p
 		_set("origin", origin).
 		_set("x", x).
 		_set("y", y)
-
 }
 
 func (g w3cGesture) size(size ...float64) w3cGesture {
@@ -1016,7 +1026,7 @@ func (d *Driver) PerformW3CActions(action W3CAction, acts ...W3CAction) (err err
 		"actions": acts,
 	}
 	// register(postHandler, new W3CActions("/wd/hub/session/:sessionId/actions"))
-	_, err = d.executePost(data, "/session", d.sessionId, "/actions")
+	_, err = d.ExecutePost(data, "/session", d.sessionId, "/actions")
 	return
 }
 
@@ -1033,10 +1043,10 @@ func (d *Driver) GetClipboard(contentType ...ClipDataType) (content string, err 
 		"contentType": contentType[0],
 	}
 	var rawResp RawResponse
-	if rawResp, err = d.executePost(data, "/session", d.sessionId, "appium/device/get_clipboard"); err != nil {
+	if rawResp, err = d.ExecutePost(data, "/session", d.sessionId, "appium/device/get_clipboard"); err != nil {
 		return "", err
 	}
-	var reply = new(struct{ Value string })
+	reply := new(struct{ Value string })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return "", err
 	}
@@ -1066,7 +1076,7 @@ func (d *Driver) SetClipboard(contentType ClipDataType, content string, label ..
 		"content":     base64.StdEncoding.EncodeToString([]byte(content)),
 	}
 	// register(postHandler, new SetClipboard("/wd/hub/session/:sessionId/appium/device/set_clipboard"))
-	_, err = d.executePost(data, "/session", d.sessionId, "appium/device/set_clipboard")
+	_, err = d.ExecutePost(data, "/session", d.sessionId, "appium/device/set_clipboard")
 	return
 }
 
@@ -1078,7 +1088,7 @@ func (d *Driver) AlertAccept(buttonLabel ...string) (err error) {
 		data["buttonLabel"] = buttonLabel[0]
 	}
 	// register(postHandler, new AcceptAlert("/wd/hub/session/:sessionId/alert/accept"))
-	_, err = d.executePost(data, "/session", d.sessionId, "alert/accept")
+	_, err = d.ExecutePost(data, "/session", d.sessionId, "alert/accept")
 	return
 }
 
@@ -1090,7 +1100,7 @@ func (d *Driver) AlertDismiss(buttonLabel ...string) (err error) {
 		data["buttonLabel"] = buttonLabel[0]
 	}
 	// register(postHandler, new DismissAlert("/wd/hub/session/:sessionId/alert/dismiss"))
-	_, err = d.executePost(data, "/session", d.sessionId, "alert/dismiss")
+	_, err = d.ExecutePost(data, "/session", d.sessionId, "alert/dismiss")
 	return
 }
 
@@ -1099,7 +1109,7 @@ func (d *Driver) SetAppiumSettings(settings map[string]interface{}) (err error) 
 		"settings": settings,
 	}
 	// register(postHandler, new UpdateSettings("/wd/hub/session/:sessionId/appium/settings"))
-	_, err = d.executePost(data, "/session", d.sessionId, "appium/settings")
+	_, err = d.ExecutePost(data, "/session", d.sessionId, "appium/settings")
 	return
 }
 
@@ -1108,19 +1118,20 @@ func (d *Driver) SetOrientation(orientation Orientation) (err error) {
 		"orientation": orientation,
 	}
 	// register(postHandler, new SetOrientation("/wd/hub/session/:sessionId/orientation"))
-	_, err = d.executePost(data, "/session", d.sessionId, "orientation")
+	_, err = d.ExecutePost(data, "/session", d.sessionId, "orientation")
 	return
 }
 
 // SetRotation
-//  `x` and `y` are ignored. We only care about `z`
-//  0/90/180/270
+//
+//	`x` and `y` are ignored. We only care about `z`
+//	0/90/180/270
 func (d *Driver) SetRotation(rotation Rotation) (err error) {
 	data := map[string]interface{}{
 		"z": rotation.Z,
 	}
 	// register(postHandler, new SetRotation("/wd/hub/session/:sessionId/rotation"))
-	_, err = d.executePost(data, "/session", d.sessionId, "rotation")
+	_, err = d.ExecutePost(data, "/session", d.sessionId, "rotation")
 	return
 }
 
@@ -1144,7 +1155,7 @@ func (d *Driver) NetworkConnection(networkType NetworkType) (err error) {
 	data := map[string]interface{}{
 		"type": networkType,
 	}
-	_, err = d.executePost(data, "/session", d.sessionId, "network_connection")
+	_, err = d.ExecutePost(data, "/session", d.sessionId, "network_connection")
 	return
 }
 
@@ -1158,10 +1169,10 @@ func (d *Driver) _findElements(method, selector string, elementID ...string) (el
 		data["context"] = elementID[0]
 	}
 	var rawResp RawResponse
-	if rawResp, err = d.executePost(data, "/session", d.sessionId, "/elements"); err != nil {
+	if rawResp, err = d.ExecutePost(data, "/session", d.sessionId, "/elements"); err != nil {
 		return nil, err
 	}
-	var reply = new(struct{ Value []map[string]string })
+	reply := new(struct{ Value []map[string]string })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return nil, err
 	}
@@ -1189,10 +1200,10 @@ func (d *Driver) _findElement(method, selector string, elementID ...string) (ele
 		data["context"] = elementID[0]
 	}
 	var rawResp RawResponse
-	if rawResp, err = d.executePost(data, "/session", d.sessionId, "/element"); err != nil {
+	if rawResp, err = d.ExecutePost(data, "/session", d.sessionId, "/element"); err != nil {
 		return nil, err
 	}
-	var reply = new(struct{ Value map[string]string })
+	reply := new(struct{ Value map[string]string })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return nil, err
 	}
@@ -1218,10 +1229,10 @@ func (d *Driver) FindElement(by BySelector) (elem *Element, err error) {
 func (d *Driver) ActiveElement() (elem *Element, err error) {
 	// register(getHandler, new ActiveElement("/wd/hub/session/:sessionId/element/active"))
 	var rawResp RawResponse
-	if rawResp, err = d.executeGet("/session", d.sessionId, "/element/active"); err != nil {
+	if rawResp, err = d.ExecuteGet("/session", d.sessionId, "/element/active"); err != nil {
 		return nil, err
 	}
-	var reply = new(struct{ Value map[string]string })
+	reply := new(struct{ Value map[string]string })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return nil, err
 	}
@@ -1272,4 +1283,22 @@ func (d *Driver) WaitWithTimeout(condition Condition, timeout float64) error {
 // Wait works like WaitWithTimeoutAndInterval, but using the default timeout and polling interval.
 func (d *Driver) Wait(condition Condition) error {
 	return d._waitWithTimeoutAndInterval(condition, DefaultWaitTimeout, DefaultWaitInterval)
+}
+
+// startRecordingScreen
+func (d *Driver) StartRecordingScreen() (err error) {
+	// register(postHandler, new Tap("/wd/hub/session/:session_id/appium/start_recording_screen"))
+	data := map[string]interface{}{
+		"options.bugReport": "true",
+	}
+	_, err = d.ExecutePost(data, "/session", d.sessionId, "/appium/start_recording_screen")
+	return
+}
+
+// stopRecordingScreen
+func (d *Driver) StopRecordingScreen() (vid RawResponse, err error) {
+	// register(postHandler, new Tap("/wd/hub/session/:session_id/appium/stop_recording_screen"))
+	data := map[string]interface{}{}
+	vid, err = d.ExecutePost(data, "/session", d.sessionId, "/appium/stop_recording_screen")
+	return
 }

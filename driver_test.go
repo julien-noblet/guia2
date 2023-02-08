@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-var uiaServerURL = "http://localhost:6790/wd/hub"
+var uiaServerURL = "http://localhost:6790/"
 
 func TestDriver_NewSession(t *testing.T) {
 	SetDebug(true)
@@ -124,7 +124,7 @@ func TestDriver_Screenshot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Log(ioutil.WriteFile("/Users/hero/Desktop/s1.png", screenshot.Bytes(), 0600))
+	t.Log(ioutil.WriteFile("/Users/hero/Desktop/s1.png", screenshot.Bytes(), 0o600))
 }
 
 func TestDriver_Orientation(t *testing.T) {
@@ -591,7 +591,6 @@ func TestDriver_TouchMove(t *testing.T) {
 	SetDebug(false)
 
 	doTouchUp(400, 260)
-
 }
 
 func TestDriver_OpenNotification(t *testing.T) {
@@ -926,11 +925,9 @@ func TestDriver_WaitWithTimeoutAndInterval(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
 }
 
 func TestDriver_ActiveElement(t *testing.T) {
-
 	driver, err := NewUSBDriver()
 	if err != nil {
 		t.Fatal(err)

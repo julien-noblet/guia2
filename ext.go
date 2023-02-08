@@ -4,17 +4,20 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/electricbubble/gadb"
 	"net"
 	"os"
 	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/electricbubble/gadb"
 )
 
-var AdbServerHost = "localhost"
-var AdbServerPort = gadb.AdbServerPort
+var (
+	AdbServerHost = "localhost"
+	AdbServerPort = gadb.AdbServerPort
+)
 
 var UIA2ServerPort = 6790
 
@@ -49,7 +52,8 @@ func NewUSBDriver(device ...Device) (driver *Driver, err error) {
 		return nil, err
 	}
 
-	rawURL := fmt.Sprintf("http://%s%d:6790/wd/hub", forwardToPrefix, localPort)
+	// rawURL := fmt.Sprintf("http://%s%d:6790/wd/hub", forwardToPrefix, localPort) // Appium v<5
+	rawURL := fmt.Sprintf("http://%s%d:6790/", forwardToPrefix, localPort) // Appium v>=5.0.0
 
 	if driver, err = NewDriver(NewEmptyCapabilities(), rawURL); err != nil {
 		_ = usbDevice.ForwardKill(localPort)
@@ -57,6 +61,32 @@ func NewUSBDriver(device ...Device) (driver *Driver, err error) {
 	}
 	driver.usbDevice = usbDevice
 	driver.localPort = localPort
+	return
+}
+
+func NewAppiumDriver(cap Capabilities, ip string, uia2Port ...int) (driver *Driver, err error) {
+	if len(uia2Port) == 0 {
+		uia2Port = []int{UIA2ServerPort}
+	}
+	var devices []Device
+	if devices, err = DeviceList(); err != nil {
+		return nil, err
+	}
+
+	// rawURL := fmt.Sprintf("http://%s:%d/wd/hub", strings.Split(ip, ":")[0], uia2Port[0])
+	rawURL := fmt.Sprintf("http://%s:%d/wd/hub", ip, uia2Port[0])
+
+	var usbDevice gadb.Device
+
+	usbDevice = devices[0]
+
+	if usbDevice.Serial() == "" {
+		return nil, errors.New("no matching and online device found")
+	}
+	if driver, err = NewDriver(cap, rawURL); err != nil {
+		return nil, err
+	}
+	driver.usbDevice = usbDevice
 	return
 }
 
@@ -102,7 +132,8 @@ func (d *Driver) check() error {
 }
 
 // Dispose corresponds to the command:
-//  adb -s $serial forward --remove $localPort
+//
+//	adb -s $serial forward --remove $localPort
 func (d *Driver) Dispose() (err error) {
 	if err = d.check(); err != nil {
 		return err
@@ -419,8 +450,9 @@ func (s UiSelectorHelper) Index(index int) UiSelectorHelper {
 // 2, the `className(String)` matches the image
 // widget class, and `enabled(boolean)` is true.
 // The code would look like this:
-//  `new UiSelector().className("android.widget.ImageView")
-//    .enabled(true).instance(2);`
+//
+//	`new UiSelector().className("android.widget.ImageView")
+//	  .enabled(true).instance(2);`
 func (s UiSelectorHelper) Instance(instance int) UiSelectorHelper {
 	s.value.WriteString(fmt.Sprintf(`.instance(%d)`, instance))
 	return s

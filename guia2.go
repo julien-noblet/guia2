@@ -5,23 +5,27 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/electricbubble/gadb"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/electricbubble/gadb"
 )
 
 // HTTPClient is the default client to use to communicate with the WebDriver server.
 var HTTPClient = http.DefaultClient
 
-var DefaultWaitTimeout = time.Second * 60
-var DefaultWaitInterval = time.Millisecond * 250
+var (
+	DefaultWaitTimeout  = time.Second * 60
+	DefaultWaitInterval = time.Millisecond * 250
+)
 
 type RawResponse []byte
 
@@ -30,7 +34,7 @@ var uia2Header = map[string]string{
 	"accept":       "application/json",
 }
 
-func executeHTTP(method string, rawURL string, rawBody []byte) (rawResp RawResponse, err error) {
+func ExecuteHTTP(method string, rawURL string, rawBody []byte) (rawResp RawResponse, err error) {
 	var localPort int
 	{
 		tmpURL, _ := url.Parse(rawURL)
@@ -85,7 +89,7 @@ func executeHTTP(method string, rawURL string, rawBody []byte) (rawResp RawRespo
 		return nil, err
 	}
 
-	var reply = new(struct {
+	reply := new(struct {
 		Value struct {
 			Err        string `json:"error"`
 			Message    string `json:"message"`
@@ -171,4 +175,5 @@ func debugLog(msg string) {
 		return
 	}
 	log.Println("[DEBUG] " + msg)
+	os.WriteFile("out.log", []byte(msg), 0o600)
 }
