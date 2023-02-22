@@ -11,7 +11,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/nanxin/gadb"
+	"github.com/julien-noblet/gadb"
 )
 
 var (

@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nanxin/gadb"
+	"github.com/julien-noblet/gadb"
 )
 
 type Driver struct {
@@ -1312,4 +1312,8 @@ func (d *Driver) StopRecordingScreen() (vid RawResponse, err error) {
 	data := map[string]interface{}{}
 	vid, err = d.ExecutePost(data, "/session", d.sessionId, "/appium/stop_recording_screen")
 	return
+}
+
+func (d *Driver) GetDevice() gadb.Device {
+	return d.usbDevice
 }
