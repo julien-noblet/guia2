@@ -17,7 +17,7 @@ func (e *Element) Text() (text string, err error) {
 	if rawResp, err = e.parent.ExecuteGet("/session", e.parent.sessionId, "/element", e.id, "/text"); err != nil {
 		return "", err
 	}
-	var reply = new(struct{ Value string })
+	reply := new(struct{ Value string })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return "", err
 	}
@@ -31,7 +31,7 @@ func (e *Element) GetAttribute(name string) (attribute string, err error) {
 	if rawResp, err = e.parent.ExecuteGet("/session", e.parent.sessionId, "/element", e.id, "/attribute", name); err != nil {
 		return "", err
 	}
-	var reply = new(struct{ Value string })
+	reply := new(struct{ Value string })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return "", err
 	}
@@ -45,7 +45,7 @@ func (e *Element) ContentDescription() (name string, err error) {
 	if rawResp, err = e.parent.ExecuteGet("/session", e.parent.sessionId, "/element", e.id, "/name"); err != nil {
 		return "", err
 	}
-	var reply = new(struct{ Value string })
+	reply := new(struct{ Value string })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return "", err
 	}
@@ -59,7 +59,7 @@ func (e *Element) Size() (size Size, err error) {
 	if rawResp, err = e.parent.ExecuteGet("/session", e.parent.sessionId, "/element", e.id, "/size"); err != nil {
 		return Size{-1, -1}, err
 	}
-	var reply = new(struct{ Value Size })
+	reply := new(struct{ Value Size })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return Size{-1, -1}, err
 	}
@@ -78,7 +78,7 @@ func (e *Element) Rect() (rect Rect, err error) {
 	if rawResp, err = e.parent.ExecuteGet("/session", e.parent.sessionId, "/element", e.id, "/rect"); err != nil {
 		return Rect{}, err
 	}
-	var reply = new(struct{ Value Rect })
+	reply := new(struct{ Value Rect })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return Rect{}, err
 	}
@@ -95,7 +95,7 @@ func (e *Element) Screenshot() (raw *bytes.Buffer, err error) {
 	if rawResp, err = e.parent.ExecuteGet("/session", e.parent.sessionId, "/element", e.id, "/screenshot"); err != nil {
 		return nil, err
 	}
-	var reply = new(struct{ Value string })
+	reply := new(struct{ Value string })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func (e *Element) Location() (point Point, err error) {
 	if rawResp, err = e.parent.ExecuteGet("/session", e.parent.sessionId, "/element", e.id, "/location"); err != nil {
 		return Point{-1, -1}, err
 	}
-	var reply = new(struct{ Value Point })
+	reply := new(struct{ Value Point })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return Point{-1, -1}, err
 	}

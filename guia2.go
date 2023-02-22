@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/electricbubble/gadb"
+	"github.com/nanxin/gadb"
 )
 
 // HTTPClient is the default client to use to communicate with the WebDriver server.

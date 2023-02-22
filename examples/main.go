@@ -2,14 +2,18 @@ package main
 
 import (
 	"fmt"
-	"github.com/electricbubble/guia2"
 	"io/ioutil"
 	"log"
 	"os"
+
+	"github.com/julien-noblet/guia2"
 )
 
 func main() {
-	driver, err := guia2.NewUSBDriver()
+	devices, _ := guia2.DeviceList()
+	device := devices[0]
+	fmt.Println(device.Serial())
+	driver, err := guia2.NewUSBDriver(device)
 	// driver, err := guia2.NewWiFiDriver("192.168.1.28")
 	checkErr(err)
 	defer func() { _ = driver.Dispose() }()
@@ -73,7 +77,7 @@ func main() {
 	screenshot, err := element.Screenshot()
 	checkErr(err)
 	userHomeDir, _ := os.UserHomeDir()
-	checkErr(ioutil.WriteFile(userHomeDir+"/Desktop/element.png", screenshot.Bytes(), 0600))
+	checkErr(ioutil.WriteFile(userHomeDir+"/Desktop/element.png", screenshot.Bytes(), 0o600))
 
 	err = driver.PressKeyCode(guia2.KCMediaPause, guia2.KMEmpty)
 	checkErr(err)

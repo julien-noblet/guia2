@@ -11,7 +11,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/electricbubble/gadb"
+	"github.com/nanxin/gadb"
 )
 
 var (

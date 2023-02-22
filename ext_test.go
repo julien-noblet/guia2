@@ -29,7 +29,6 @@ func TestUiSelectorHelper_NewUiSelectorHelper(t *testing.T) {
 	if uiSelector != `new UiSelector().childSelector(new UiSelector().enabled(true));` {
 		t.Fatal("[ERROR]", uiSelector)
 	}
-
 }
 
 func Test_getFreePort(t *testing.T) {

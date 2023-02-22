@@ -128,7 +128,7 @@ func TestElement_Screenshot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Log(ioutil.WriteFile("/Users/hero/Desktop/e1.png", screenshot.Bytes(), 0600))
+	t.Log(ioutil.WriteFile("/Users/hero/Desktop/e1.png", screenshot.Bytes(), 0o600))
 }
 
 func TestElement_Location(t *testing.T) {

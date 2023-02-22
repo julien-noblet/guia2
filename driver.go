@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/electricbubble/gadb"
+	"github.com/nanxin/gadb"
 )
 
 type Driver struct {
@@ -64,10 +64,21 @@ func NewDriver(capabilities Capabilities, urlPrefix string) (driver *Driver, err
 	if driver.urlPrefix, err = url.Parse(urlPrefix); err != nil {
 		return nil, err
 	}
-	if driver.sessionId, err = driver.NewSession(capabilities); err != nil {
-		return nil, err
+	retryTimes := 0
+	for {
+		if driver.sessionId, err = driver.NewSession(capabilities); err != nil {
+			if retryTimes > 10 {
+				return nil, err
+			} else {
+				fmt.Printf("waiting for appium server start, retry times %d\n", retryTimes)
+				retryTimes++
+				time.Sleep(time.Second)
+				continue
+			}
+		} else {
+			return
+		}
 	}
-	return
 }
 
 func (d *Driver) NewSession(capabilities Capabilities) (sessionID string, err error) {
