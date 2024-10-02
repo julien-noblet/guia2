@@ -2,62 +2,62 @@
 [![go doc](https://godoc.org/github.com/electricbubble/guia2?status.svg)](https://pkg.go.dev/github.com/electricbubble/guia2?tab=doc)
 [![license](https://img.shields.io/github/license/electricbubble/guia2)](https://github.com/electricbubble/guia2/blob/master/LICENSE)
 
-使用 Golang 实现 [appium/appium-uiautomator2-server](https://github.com/appium/appium-uiautomator2-server) 的客户端库
+Client library implemented in Golang for [appium/appium-uiautomator2-server](https://github.com/appium/appium-uiautomator2-server)
 
-## 扩展库
+## Extensions
 
-- [electricbubble/guia2-ext-opencv](https://github.com/electricbubble/guia2-ext-opencv) 直接通过指定图片进行操作
+- [electricbubble/guia2-ext-opencv](https://github.com/electricbubble/guia2-ext-opencv) Perform operations directly by specifying images
 
-> 如果使用 `IOS` 设备, 可查看 [electricbubble/gwda](https://github.com/electricbubble/gwda)
+> If using `IOS` devices, check out [electricbubble/gwda](https://github.com/electricbubble/gwda)
 
-## 安装
+## Installation
 ```bash
 go get github.com/electricbubble/guia2
 ```
 
-## 使用
+## Usage
 
-> 首次使用需要在 `Android` 设备中安装两个 `apk`  
+> For the first use, you need to install two `apk` files on the `Android` device  
 > `appium-uiautomator2-server-debug-androidTest.apk`  
 > `appium-uiautomator2-server-vXX.XX.XX.apk`
 >
->> `apk` 可以选择通过 [appium/appium-uiautomator2-server](https://github.com/appium/appium-uiautomator2-server#building-project) 进行构建  
->> 也可以直接从这里下载 [electricbubble/appium-uiautomator2-server-apk](https://github.com/electricbubble/appium-uiautomator2-server-apk/releases)
+>> You can choose to build the `apk` from [appium/appium-uiautomator2-server](https://github.com/appium/appium-uiautomator2-server#building-project)  
+>> Or download directly from here [electricbubble/appium-uiautomator2-server-apk](https://github.com/electricbubble/appium-uiautomator2-server-apk/releases)
 >  
 >
-> 再通过 `adb` 启动 `appium-uiautomator2-server`  
+> Then start `appium-uiautomator2-server` via `adb`  
 > ```shell script
 > adb shell am instrument -w io.appium.uiautomator2.server.test/androidx.test.runner.AndroidJUnitRunner
-> # ⬇️ 后台运行
+> # ⬇️ Run in the background
 > adb shell "nohup am instrument -w io.appium.uiautomator2.server.test/androidx.test.runner.AndroidJUnitRunner >/sdcard/uia2server.log 2>&1 &"
 > # or
 > adb -s $serial shell "nohup am instrument -w io.appium.uiautomator2.server.test/androidx.test.runner.AndroidJUnitRunner >/sdcard/uia2server.log 2>&1 &"
 > ```
 
 ### `guia2.NewUSBDriver()`
-该函数使用期间, `Android` 设备必须一直保持 `USB` 的连接 (`模拟器` 也使用该函数)
+During the use of this function, the `Android` device must always maintain a `USB` connection (this function is also used for `emulators`)
 
 ### `guia2.NewWiFiDriver("192.168.1.28")`
-1. 先通过 `USB` 连接 `Android` 设备
-2. 让设备在 5555 端口监听 TCP/IP 连接
-    ```shell script
-    adb tcpip 5555
+1. First connect the `Android` device via `USB`
+2. Let the device listen for TCP/IP connections on port 5555
+	```shell script
+	adb tcpip 5555
    # or
-    adb -s $serial tcpip 5555
-    ```
-3. 查询 `Android` 设备的 `IP` (这一步骤开始可选择断开 `USB` 连接)
-4. 通过 `IP` 连接 `Android` 设备
-    ```shell script
-    adb connect $deviceIP
-    ```
-5. 确认连接状态
-    ```shell script
-    adb devices
-    ```
-    看到以下格式的设备, 说明连接成功
-    ```shell script
-    $deviceIP:5555    device
-    ```
+	adb -s $serial tcpip 5555
+	```
+3. Find the `IP` of the `Android` device (you can choose to disconnect the `USB` connection from this step)
+4. Connect to the `Android` device via `IP`
+	```shell script
+	adb connect $deviceIP
+	```
+5. Confirm the connection status
+	```shell script
+	adb devices
+	```
+	If you see a device in the following format, the connection is successful
+	```shell script
+	$deviceIP:5555    device
+	```
 
 ```go
 package main
@@ -110,18 +110,18 @@ func main() {
 	element, err = waitForElement(driver, bySelector)
 	checkErr(err)
 
-	err = element.SendKeys("雾山五行")
+	err = element.SendKeys("Fog Hill of Five Elements")
 	checkErr(err)
 
 	err = driver.PressKeyCode(guia2.KCEnter, guia2.KMEmpty)
 	checkErr(err)
 
-	bySelector = guia2.BySelector{UiAutomator: guia2.NewUiSelectorHelper().TextStartsWith("番剧").String()}
+	bySelector = guia2.BySelector{UiAutomator: guia2.NewUiSelectorHelper().TextStartsWith("Anime").String()}
 	element, err = waitForElement(driver, bySelector)
 	checkErr(err)
 	checkErr(element.Click())
 
-	bySelector = guia2.BySelector{UiAutomator: guia2.NewUiSelectorHelper().Text("立即观看").String()}
+	bySelector = guia2.BySelector{UiAutomator: guia2.NewUiSelectorHelper().Text("Watch Now").String()}
 	element, err = waitForElement(driver, bySelector)
 	checkErr(err)
 	checkErr(element.Click())
@@ -151,7 +151,7 @@ func waitForElement(driver *guia2.Driver, bySelector guia2.BySelector) (element 
 		if ce == nil {
 			return true, nil
 		}
-		// 如果直接返回 error 将直接终止 `driver.Wait`
+		// If you return an error directly, it will terminate `driver.Wait`
 		return false, nil
 	}
 	if err = driver.Wait(exists); err != nil {
@@ -175,7 +175,7 @@ func checkErr(err error, msg ...string) {
 
 ```
 
-> 感谢小伙伴提供的 `红米 Note 5A`
+> Thanks to the buddy who provided the `Redmi Note 5A`
 
 
 ![example](https://github.com/electricbubble/ImageHosting/blob/master/img/202008192034_guia2.gif)
@@ -184,3 +184,4 @@ func checkErr(err error, msg ...string) {
 ## Thanks
 
 Thank you [JetBrains](https://www.jetbrains.com/?from=gwda) for providing free open source licenses
+
